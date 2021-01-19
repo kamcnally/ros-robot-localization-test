@@ -1,7 +1,7 @@
 <launch>
     <arg name="namespace" default=""/>
     <arg name="use_gui" default="false"/>
-    <param name="/use_sim_time" value="true"/>
+    <param name="/use_sim_time" value="false"/>
 
     <param name="robot_description" command="xacro --inorder '$(find cust_robot_description)/robots/cust_robot_default.urdf.xacro'" />
 
@@ -15,13 +15,6 @@
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cust_robot_description)/rviz/view.rviz" required="true" />
     <node pkg="rqt_topic" type="rqt_topic" name="rqt_topic"/>
 
-    <!--  Transforms  -->
-    <node pkg="tf" type="static_transform_publisher" name="gps_tf" args="0 0 0 0 0 0 1 cust_robot/base_link gps 30"/>
-    <node pkg="tf" type="static_transform_publisher" name="imu_tf" args="0 0 0 0 0 0 1 cust_robot/base_link imu 30"/>
-
     <include file="$(find cust_robot_description)/launch/localization.launch" />
-
-    <!-- Playback of sample GNSS data -->
-    <node name="rosbag_play" pkg="rosbag" type="play" args="--clock $(find cust_robot_description)/misc/sample.bag" />
 
 </launch>
