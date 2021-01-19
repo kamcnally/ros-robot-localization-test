@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+  <!-- Import macro files -->
+  <xacro:include filename="$(find uuv_descriptions)/urdf/common.urdf.xacro" />
+  <xacro:include filename="$(find uuv_sensor_ros_plugins)/urdf/sensor_snippets.xacro"/>
+  <xacro:include filename="$(find uuv_gazebo_ros_plugins)/urdf/snippets.xacro"/>
+
+  <!-- Center of buoyancy -->
+  <xacro:property name="hs_test_cob" value="0 0 0.2"/>
+
+  <!-- Vehicle's actual volume (Gazebo cannot compute the volume out of the mesh) -->
+  <xacro:property name="hs_test_volume" value="0.18807"/>
+
+  <!-- Describing the dimensions of the vehicle's bounding box -->
+  <xacro:property name="hs_test_length" value="1.35"/>
+  <xacro:property name="hs_test_width"  value="1.0"/>
+  <xacro:property name="hs_test_height" value="0.624261"/>
+  
+  <!-- Properties -->
+  <xacro:property name="mass" value="69.7"/>
+  <xacro:property name="rho" value="1027.0"/>
+
+  <xacro:property name="visual_mesh_file" value="file://$(find cust_robot_description)/mesh/cust_robot.dae"/>
+  <xacro:property name="collision_mesh_file" value="file://$(find cust_robot_description)/mesh/cust_robot.stl"/>
+
+  <xacro:macro name="cust_robot_base" params="namespace debug inertial_reference_frame">
+    <link name="${namespace}/base_link">
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${visual_mesh_file}" scale="1 1 1" />
+        </geometry>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${visual_mesh_file}" scale="1 1 1" />
+        </geometry>
+      </collision>
+
+      <inertial>
+        <mass value="${mass}" />
+        <origin xyz="0.3 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.6" ixy="0" ixz="0"
+                 iyy="30.0" iyz="0"
+                 izz="35.0" />
+      </inertial>
+    </link>
+
+    <!-- Set up hydrodynamic plugin -->
+    <gazebo>
+      <plugin name="${namespace}_uuv_plugin" filename="libuuv_underwater_object_ros_plugin.so">
+        <fluid_density>${rho}</fluid_density>
+        <flow_velocity_topic>hydrodynamics/current_velocity</flow_velocity_topic>
+        <debug>${debug}</debug>
+        <link name="${namespace}/base_link">
+          
+          <!-- This flag will make the link neutrally buoyant -->
+          <neutrally_buoyant>0</neutrally_buoyant>
+
+          <!-- Link's volume -->
+          <volume>${hs_test_volume}</volume>
+
+          <!-- Link's bounding box, it is used to recalculate the immersed
+          volume when close to the surface.
+          This is a workaround the invalid bounding box given by Gazebo-->
+          <box>
+            <width>${hs_test_width}</width>
+            <length>${hs_test_length}</length>
+            <height>${hs_test_height}</height>
+          </box>
+
+          <!-- Center of buoyancy -->
+          <center_of_buoyancy>${hs_test_cob}</center_of_buoyancy>
+
+          <hydrodynamic_model>
+            <type>fossen</type>
+            <added_mass>
+              1   0   0   0   0   0
+              0   1   0   0   0   0
+              0   0   1   0   0   0
+              0   0   0   1   0   0
+              0   0   0   0   1   0
+              0   0   0   0   0   1
+            </added_mass>
+            <linear_damping>
+              -20 -20 -20 -20 -20 -20
+            </linear_damping>
+            <quadratic_damping>
+              -10.0 -10.0 -10.0 -50.0 -50.0 -50.0
+            </quadratic_damping>
+
+            <metacentric_width>0.5</metacentric_width>
+            <metacentric_length>0.675</metacentric_length>
+            <submerged_height>0.2</submerged_height>
+
+          </hydrodynamic_model>
+        </link>
+      </plugin>
+    </gazebo>
+
+    <!-- Include the sensor modules -->
+    <xacro:include filename="$(find cust_robot_description)/urdf/cust_robot_sensors.xacro"/>
+
+  </xacro:macro>
+</robot>

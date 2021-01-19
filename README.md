@@ -1,0 +1,1 @@
+This repo contains a base example of using the [robot_localization](http://wiki.ros.org/robot_localization) package to integrate GPS & IMU sensors with a robot for visualisation in RVIZ.

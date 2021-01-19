@@ -1,0 +1,20 @@
+<launch>
+
+    <node name="gps_conv" pkg="gps_common" type="utm_odometry_node">
+        <remap from="fix" to="/cust_gnss/gps" />
+        <param name="rot_covariance" value="99999" />
+        <param name="frame_id" value="odom" />
+        <param name="child_frame_id" value="cust_robot/base_link" />
+    </node>
+
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization_global" respawn="true">
+        <rosparam command="load" file="$(find cust_robot_description)/params/localization_global.yaml" />
+    </node>
+
+    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true">
+        <rosparam command="load" file="$(find cust_robot_description)/params/gps_navsat_transform.yaml" />
+        <remap from="gps/fix" to="cust_gnss/gps" />
+        <remap from="imu/data" to="cust_gnss/imu" />
+    </node>
+
+</launch>
